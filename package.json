@@ -1,0 +1,10 @@
+{
+  "name": "com.mycompany.wallmodule",
+  "displayName": "Wall Module",
+  "version": "1.0.0",
+  "unity": "2022.3.37f1",
+  "description": "Модуль для реализации функционала стены, зависящий от пакета Common.",
+  "dependencies": {
+    "com.mycompany.common": "https://github.com/LuckyCourier37/Common"
+  }
+}

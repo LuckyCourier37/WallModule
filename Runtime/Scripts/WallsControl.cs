@@ -1,0 +1,155 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using UnityEngine;
+
+public class WallsControl : Controller
+{
+
+    [Header("Wall Settings")]
+    [Tooltip("Префаб фрагмента стены (не растягиваемый).")]
+    public GameObject wallFragmentPrefab;
+    [Tooltip("Нужно ли генерировать стены после создания сетки.")]
+    public bool generateWalls = true;
+
+    [Header("Wall Generation Options")]
+    [Tooltip("Генерировать верхнюю стену")]
+    public bool generateWallTop = true;
+    [Tooltip("Генерировать нижнюю стену")]
+    public bool generateWallBottom = true;
+    [Tooltip("Генерировать левую стену")]
+    public bool generateWallLeft = true;
+    [Tooltip("Генерировать правую стену")]
+    public bool generateWallRight = true;
+
+    public Transform wallContainer;
+
+    private Vector2 calculatedWallDimensions = Vector2.one;
+    private Vector2 calculatedCellDimensions = Vector2.one;
+    private enum WallSide { Top, Bottom, Left, Right }
+    private CellsControl cellsControl;
+
+    public override void Init()
+    {
+        cellsControl = Main.Instance.GetController<CellsControl>();
+
+        if (generateWalls)
+            GenerateWalls();
+    }
+
+    [ContextMenu("Generate Walls")]
+    public void GenerateWalls()
+    {
+        if (!wallFragmentPrefab)
+        {
+            Debug.LogError("CellsControl: Префаб фрагмента стены не назначен!");
+            return;
+        }
+
+        ClearWalls();
+        CalculateWallDimensions();
+        Vector2 currentSpacing = cellsControl.GetCurrentSpacing();
+        Vector2 stepDistance = cellsControl.GetStepDistance(currentSpacing);
+        Vector3 gridOffset = cellsControl.CalculateGridOffset(stepDistance);
+
+        if (wallContainer == null)
+            GenerateWallContainer();
+
+        if (generateWallBottom)
+        {
+            Vector3 startPosBottom = cellsControl.CalculateCellPosition(0, 0, stepDistance, gridOffset);
+            Vector3 offsetBottom = Vector3.back * (calculatedCellDimensions.y / 2f + calculatedWallDimensions.y / 2) + Vector3.up * (calculatedWallDimensions.x / 2f);
+            GenerateWallLine(cellsControl.gridWidth, startPosBottom, Vector3.right * stepDistance.x, offsetBottom, Quaternion.Euler(0, 90, 90), WallSide.Bottom);
+        }
+
+        if (generateWallTop)
+        {
+            Vector3 startPosTop = cellsControl.CalculateCellPosition(0, cellsControl.gridHeight - 1, stepDistance, gridOffset);
+            Vector3 offsetTop = Vector3.forward * (calculatedCellDimensions.y / 2f + calculatedWallDimensions.y / 2) + Vector3.up * (calculatedWallDimensions.x / 2f);
+            GenerateWallLine(cellsControl.gridWidth, startPosTop, Vector3.right * stepDistance.x, offsetTop, Quaternion.Euler(0, 90, 90), WallSide.Top);
+        }
+
+        if (generateWallLeft)
+        {
+            Vector3 startPosLeft = cellsControl.CalculateCellPosition(0, 0, stepDistance, gridOffset);
+            Vector3 offsetLeft = Vector3.left * (calculatedCellDimensions.x / 2f + calculatedWallDimensions.y / 2f) + Vector3.up * (calculatedWallDimensions.x / 2f);
+            GenerateWallLine(cellsControl.gridHeight, startPosLeft, Vector3.forward * stepDistance.y, offsetLeft, Quaternion.Euler(0, 0, 90), WallSide.Left);
+        }
+
+        if (generateWallRight)
+        {
+            Vector3 startPosRight = cellsControl.CalculateCellPosition(cellsControl.gridWidth - 1, 0, stepDistance, gridOffset);
+            Vector3 offsetRight = Vector3.right * (calculatedCellDimensions.x / 2f + calculatedWallDimensions.y / 2f) + Vector3.up * (calculatedWallDimensions.x / 2f);
+            GenerateWallLine(cellsControl.gridHeight, startPosRight, Vector3.forward * stepDistance.y, offsetRight, Quaternion.Euler(0, 0, 90), WallSide.Right);
+        }
+    }
+    public void ClearWalls()
+    {
+        if (wallContainer != null)
+        {
+            for (int i = wallContainer.childCount - 1; i >= 0; i--)
+                Destroy(wallContainer.GetChild(i).gameObject);
+        }
+    }
+    private void CalculateWallDimensions()
+    {
+        if (wallFragmentPrefab == null)
+        {
+            calculatedWallDimensions = Vector2.one;
+            return;
+        }
+        Renderer wallRenderer = wallFragmentPrefab.GetComponentInChildren<Renderer>();
+        if (wallRenderer != null)
+            calculatedWallDimensions = new Vector2(wallRenderer.bounds.size.x, wallRenderer.bounds.size.y);
+        else
+            calculatedWallDimensions = Vector2.one;
+        if (calculatedWallDimensions.x <= 0 || calculatedWallDimensions.y <= 0)
+        {
+            Debug.LogError("CellsControl: Некорректные размеры префаба стены, устанавливаем единичные размеры.");
+            // Устанавливаем единичные размеры, если размеры невалидны
+            calculatedWallDimensions = Vector2.one;
+        }
+
+    }
+
+    private void GenerateWallContainer()
+    {
+        if (wallContainer == null)
+        {
+            GameObject wallContainerGO = new GameObject("WallContainer_AutoGenerated");
+            wallContainer = wallContainerGO.transform;
+            wallContainer.SetParent(cellsControl.cellContainer != null ? cellsControl.cellContainer : transform);
+            wallContainer.localPosition = Vector3.zero;
+            wallContainer.localRotation = Quaternion.identity;
+        }
+    }
+
+    private void GenerateWallLine(int count, Vector3 startPos, Vector3 step, Vector3 offset, Quaternion rotation, WallSide side)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            Vector3 pos = startPos + step * i + offset;
+            PlaceWallSegment(i, pos, rotation, $"Wall_{side}");
+        }
+    }
+
+    private void PlaceWallSegment(int index, Vector3 position, Quaternion rotation, string namePrefix)
+    {
+        if (wallFragmentPrefab == null || wallContainer == null)
+            return;
+        GameObject wallSegment = Instantiate(wallFragmentPrefab, position, rotation, wallContainer);
+        wallSegment.transform.localPosition = position;
+        wallSegment.name = $"{namePrefix}_{index}";
+        wallSegment.transform.localRotation = rotation;
+    }
+
+    [ContextMenu("Generate Walls")]
+    public void ContextMenuGenerateWalls() => GenerateWalls();
+
+    [ContextMenu("Clear Walls")]
+    public void ContextMenuClearWalls()
+    {
+        ClearWalls();
+      
+    }
+}
