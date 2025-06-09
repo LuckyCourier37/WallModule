@@ -3,6 +3,8 @@
   "displayName": "Wall Module",
   "version": "1.0.0",
   "unity": "2022.3",
-  "description": "Модуль для реализации функционала стены, зависящий от пакета Common."
-  
+  "description": "Модуль для реализации функционала стены, зависящий от пакета Common.",
+  "dependencies": {
+    "com.luckycourier37.common": "1.0.0" 
+  }
 }
