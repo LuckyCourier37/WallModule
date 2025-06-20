@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3271651429597945152}
-  - component: {fileID: 169256617926286586}
+  - component: {fileID: 8207253009698267370}
   m_Layer: 0
   m_Name: WallGenerator
   m_TagString: Untagged
@@ -32,7 +32,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &169256617926286586
+--- !u!114 &8207253009698267370
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,10 +41,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 9046233912238734498}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9d0baa3fcb4db914882ef92551df410c, type: 3}
+  m_Script: {fileID: 11500000, guid: 5ec39578d5c56e844afd9157eac993d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  wallFragmentPrefab: {fileID: 934321315915221532, guid: 2217590d53226984fb90753760919038, type: 3}
+  wallFragmentPrefab: {fileID: 934321315915221532, guid: 681e244c145efe0419cf9b7fa71ff769, type: 3}
   generateWalls: 1
   generateWallTop: 1
   generateWallBottom: 1
